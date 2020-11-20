@@ -8,7 +8,8 @@
             RUNNING = 1,
             WARNED = 2,
             CANCELLED = 3,
-            FINISHED = 4
+            FINISHED = 4,
+            STOPPED = 5
         }
 
         public enum Trigger
@@ -16,7 +17,8 @@
             START = 0,
             WARN = 1,
             CANCEL = 2,
-            FINISH = 3
+            FINISH = 3,
+            STOP = 4
         }
     }
 }

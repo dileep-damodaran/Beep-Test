@@ -73,7 +73,7 @@ namespace YoYoWebApp.Infra.Manager
             }
         }
 
-        private int? NextInterval
+        private int? NextIntervalInSecond
         {
             get
             {
@@ -140,6 +140,41 @@ namespace YoYoWebApp.Infra.Manager
                 athletes.ForEach(_x => { _x.Start(); Athletes.Add(_x); });
         }
 
+        public void WarnAthelete(int id)
+        {
+            if (id == default)
+                throw new ArgumentNullException(nameof(id));
+
+            foreach (var athlete in Athletes)
+            {
+                bool found = athlete.Id == id;
+
+                if (found && athlete.CanWarn)
+                {
+                    athlete.Warn();
+                    break;
+                }
+            }
+        }
+
+        public void StopAthelete(int id)
+        {
+            if (id == default)
+                throw new ArgumentNullException(nameof(id));
+
+            foreach (var athlete in Athletes)
+            {
+                bool found = athlete.Id == id;
+
+                if (found && athlete.CanStop)
+                {
+                    athlete.Stop();
+                    athlete.Result = new TestResult(Previous?.SpeedLevel, Previous?.ShuttleNo);
+                    break;
+                }
+            }
+        }
+
 
         private async void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
@@ -202,7 +237,7 @@ namespace YoYoWebApp.Infra.Manager
             {
                 int elapsedSeconds = (int)(stopwatch.ElapsedMilliseconds / 1000);
 
-                if (elapsedSeconds >= (NextInterval / 1000))
+                if (elapsedSeconds >= (NextIntervalInSecond / 1000))
                 {
                     Previous = Current;
                     Current = Next;

@@ -11,6 +11,19 @@
 </head>
 <body>
 
+
+
+    @*<div class="row">
+        <div class="col-sm-12 text-center">*@
+            <!--<button id="" class="btn btn-primary btn-md center-block horizontal-block" Style="width: 100px;" OnClick="btnSearch_Click">Warn</button>
+            <button id="" class="btn btn-danger btn-md center-block horizontal-block" Style="width: 100px;" OnClick="btnClear_Click">Stop</button>-->
+        @*</div>
+    </div>*@
+
+
+
+
+
     <div class="jumbotron text-center">
         <div class="row text-center">
             <div class="col-sm-12">
@@ -75,8 +88,22 @@
         });
     };
 
+    function StopAthlete(athleteId) {
+        $.ajax({
+            url: `/Test/StopAthlete?id=${athleteId}`,
+            type: "POST",
+            success: function (result) {
+
+                var msg = `Athlete ${athleteId} Stopped successfully.`;
+                console.log(msg);
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    };
+
     $(document).ready(function () {
-        var running = false;
 
         $(document).on('click', '#session-end', function (event) {
 
@@ -93,9 +120,6 @@
             var comp = $("#session-start");
             comp.hide();
             $("#session-end").show();
-            //comp.text('Stop');
-            //comp.prop('id', 'session-end');
-            //comp.prop('class', 'btn-end');
         });
 
         function Start() {
@@ -138,39 +162,57 @@
 
                     var athlete = data.Athletes[i];
 
-                    var button = $(`#control-${athlete.Id}`);
+                    var warnButton = $(`#warn-${athlete.Id}`);
+                    var stopButton = $(`#stop-${athlete.Id}`);
                     var state = $(`#state-${athlete.Id}`);
 
                     if (athlete.State === 1) {
                         //RUNNING
                         state.text('Running');
-                        button.text('Warn');
-                        button.prop("disabled", false);
-                        button.prop('class', 'btn btn-warning');
+                        warnButton.show();
+                        warnButton.text('Warn');
+                        warnButton.prop("disabled", false);
+                        warnButton.prop('class', 'btn btn-warning');
+
+                        stopButton.show();
+                        stopButton.text('Stop');
+                        stopButton.prop("disabled", false);
+                        stopButton.prop('class', 'btn btn-danger');
                     }
                     else if (athlete.State === 2) {
                         //WARNED
                         state.text('Warned');
-                        button.text('Warn');
-                        button.prop("disabled", false);
-                        button.prop('class', 'btn btn-danger');
-                    }
+                        warnButton.text('Warned');
+                        warnButton.prop('disabled', true);
 
+                        stopButton.text('Stop');
+                        stopButton.show();
+                        stopButton.prop('class', 'btn btn-danger');
+                    }
                     else if (athlete.State === 3) {
-                        //CANCELLED
-                        state.text('Disqualified');
-                        button.hide();
-                        //button.prop("disabled", true);
-                        //button.prop('class', 'btn btn-info');
+
                     }
                     else if (athlete.State === 4) {
                         //FINISHED
                         state.text('Completed');
-                        button.hide();
-                        //button.prop("disabled", true);
-                        //button.prop('class', 'btn btn-info');
+                        warnButton.fadeOut();
+                        stopButton.fadeOut();
+                    }
+                    else if (athlete.State === 5) {
+                        //STOPPED
+                        state.text('Stopped');
+                        warnButton.fadeOut();
+                        stopButton.fadeOut();
                     }
 
+
+                    if (athlete.Result != null) {
+
+                        console.log(athlete.Result);
+                        var resultTab = $(`#result-${athlete.Id}`);
+                        var result = `Level : ${athlete.Result.SpeedLevel} , Shuttle : ${athlete.Result.ShuttleNo}`;
+                        resultTab.text(result);
+                    }
                 }
             });
         };
@@ -190,11 +232,13 @@
 
         function BuildAthleteRowHtml(athlete) {
 
-            var nameStrip = `<div id="name-${athlete.id}">${athlete.name}</div>`;
-            var stateStrip = `<div id="state-${athlete.id}">${athlete.stateString}</div>`;
+            var nameStrip = `<div id="name-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;">${athlete.name}</div>`;
             var buttonStrip = GetButtonStrip(athlete);
+            var stateStrip = `<div id="state-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;"></div>`;
 
-            var rawhtml = '<div class="col-sm-12 user" style="background-color:aliceblue;">' + nameStrip + buttonStrip + stateStrip + '</div>';
+            var resultStrip = `<div id="result-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;"></div>`;
+
+            var rawhtml = '<div class="col-sm-12 user" style="background-color:aliceblue;">' + nameStrip + buttonStrip + stateStrip + resultStrip +'</div>';
 
             return rawhtml;
         }
@@ -205,19 +249,7 @@
 
             switch (athlete.state) {
                 case 0:
-                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-info" onclick="WarnAthlete(${athlete.id})" disabled>Ready</button>`;
-                    break;
-
-                case 1:
-                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-warning" onclick="WarnAthlete(${athlete.id})">Warn</button>`;
-                    break;
-
-                case 2:
-                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-danger" onclick="WarnAthlete(${athlete.id})">Warn</button>`;
-                    break;
-
-                case 3:
-                    buttonstrip = `<button type="button" id="" class="btn btn-info" disabled>Cancelled</button>`;
+                    buttonstrip = `<button type="button" id="warn-${athlete.id}" class="btn btn-warning btn-md center-block horizontal-block" Style="width: 100px;" onclick="WarnAthlete(${athlete.id})"></button><button type="button" id="stop-${athlete.id}" class="btn btn-danger btn-md center-block horizontal-block" Style="width: 100px;" onclick="StopAthlete(${athlete.id})"></button>`;
                     break;
 
                 default:

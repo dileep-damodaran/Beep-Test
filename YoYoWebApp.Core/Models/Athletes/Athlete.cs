@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using YoYoWebApp.Core.Enums;
 using YoYoWebApp.Core.Interfaces.User;
+using YoYoWebApp.Core.Models.Test;
 
 namespace YoYoWebApp.Core.Models.Athletes
 {
@@ -26,6 +27,10 @@ namespace YoYoWebApp.Core.Models.Athletes
 
         public AppEnum.State State { get; set; }
 
+
+        public TestResult Result { get; set; }
+
+
         public string StateString
         {
             get
@@ -34,16 +39,23 @@ namespace YoYoWebApp.Core.Models.Athletes
             }
         }
 
-        public int NumberOfWarning { get; set; }
-
         public bool CanWarn
+        {
+
+            get
+            {
+                return State.Equals(AppEnum.State.RUNNING);
+            }
+        }
+
+        public bool CanStop
         {
 
             get
             {
                 var allowedStates = new List<AppEnum.State>() { AppEnum.State.RUNNING, AppEnum.State.WARNED };
 
-                return allowedStates.Contains(State) && NumberOfWarning <= 1;
+                return allowedStates.Contains(State);
             }
         }
 
@@ -59,24 +71,15 @@ namespace YoYoWebApp.Core.Models.Athletes
             StateMachine.Fire(AppEnum.Trigger.WARN);
         }
 
-
-        private void WarnOnce()
+        public void Stop()
         {
-            NumberOfWarning++;
+            StateMachine.Fire(AppEnum.Trigger.STOP);
         }
+
 
         public void Finish()
         {
             StateMachine.Fire(AppEnum.Trigger.FINISH);
-        }
-
-        public bool CanStop
-        {
-
-            get
-            {
-                return State == AppEnum.State.RUNNING;
-            }
         }
 
         public void ConfigureStateMachine()
@@ -88,12 +91,12 @@ namespace YoYoWebApp.Core.Models.Athletes
 
             this.StateMachine.Configure(AppEnum.State.RUNNING)
                 .Permit(AppEnum.Trigger.WARN, AppEnum.State.WARNED)
+                .Permit(AppEnum.Trigger.STOP, AppEnum.State.STOPPED)
                 .Permit(AppEnum.Trigger.FINISH, AppEnum.State.FINISHED);
 
             this.StateMachine.Configure(AppEnum.State.WARNED)
-                .Permit(AppEnum.Trigger.WARN, AppEnum.State.CANCELLED)
-                .Permit(AppEnum.Trigger.FINISH, AppEnum.State.FINISHED)
-                .OnEntryFrom(AppEnum.Trigger.WARN, () => WarnOnce());
+                .Permit(AppEnum.Trigger.STOP, AppEnum.State.STOPPED)
+                .Permit(AppEnum.Trigger.FINISH, AppEnum.State.FINISHED);
 
         }
     }

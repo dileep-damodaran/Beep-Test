@@ -80,22 +80,26 @@ namespace YoYoWebApp.Controllers.Test
             return Ok(athletes);
         }
 
+
         [HttpPost]
         public IActionResult WarnAthlete(int id)
         {
             if (id == default)
                 return BadRequest();
 
-            foreach (var athlete in TestSession.Instance.Athletes)
-            {
-                bool found = athlete.Id == id;
+            TestSession.Instance.WarnAthelete(id);
 
-                if (found && athlete.CanWarn)
-                {
-                    athlete.Warn();
-                    break;
-                }
-            }
+            return Ok();
+        }
+
+
+        [HttpPost]
+        public IActionResult StopAthlete(int id)
+        {
+            if (id == default)
+                return BadRequest();
+
+            TestSession.Instance.StopAthelete(id);
 
             return Ok();
         }
