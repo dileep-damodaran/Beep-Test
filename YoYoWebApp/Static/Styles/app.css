@@ -1,0 +1,44 @@
+﻿body {
+}
+
+.btn-start {
+    background-color: #4CAF50;
+    border-radius: 100px;
+    border: none;
+    color: white;
+    padding: 50px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.btn-end {
+    background-color: #e94949;
+    border-radius: 100px;
+    border: none;
+    color: white;
+    padding: 50px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.user {
+    padding: 30px;
+    text-align: left;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
+
+.time {
+    text-align: center;
+    padding: 10px;
+    font-size: 35px;
+}

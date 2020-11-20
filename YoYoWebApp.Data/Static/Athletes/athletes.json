@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Elon Musk",
+    "age": "29"
+  },
+  {
+    "id": 2,
+    "name": "Nikola Tesla",
+    "age": "30"
+  },
+  {
+    "id": 3,
+    "name": "Albert Einstein",
+    "age": "26"
+  },
+  {
+    "id": 4,
+    "name": "Erwin Schordinger",
+    "age": "25"
+  }
+]

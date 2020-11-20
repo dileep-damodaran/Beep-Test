@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>YoYoWebApp</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/Static/Styles/app.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    @*<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>*@
+</head>
+<body>
+
+    <div class="jumbotron text-center">
+        <div class="row text-center">
+            <div class="col-sm-12">
+                <h3>BEEP TEST</h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <button class="btn-start" id="session-start">Start</button>
+                <button class="btn-end" id="session-end" style="display:none">Stop</button>
+                <div class="" id="level_board">
+                    <p id="level" class="time">Level :</p>
+                    <p id="shuttle" class="time">Shuttle</p>
+                </div>
+            </div>
+        </div>
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="col-sm-4" style="border-bottom-color:black">
+                        <h4>NEXT SHUTTLE</h4>
+                        <p id="next_shuttle" class="time">0:0</p>
+                    </div>
+                    <div class="col-sm-4" style="border-bottom-color:black;">
+                        <h4>TOTAL TIME</h4>
+                        <span id="total_time_minute" class="time">00</span>
+                        <span id="total_time_second" class="time">00</span>
+                        @*<span id="total_time_millisecond" class="time">000</span>*@
+
+                    </div>
+                    <div class="col-sm-4" style="border-bottom-color:black">
+                        <h4>TOTAL DISTANCE</h4>
+                        <p id="total_distance" class="time">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="athele_board">
+
+    </div>
+
+</body>
+</html>
+
+
+<script type="text/javascript">
+
+    function WarnAthlete(athleteId) {
+        $.ajax({
+            url: `/Test/WarnAthlete?id=${athleteId}`,
+            type: "POST",
+            success: function (result) {
+
+                var msg = `Athlete ${athleteId} warned successfully.`;
+                console.log(msg);
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    };
+
+    $(document).ready(function () {
+        var running = false;
+
+        $(document).on('click', '#session-end', function (event) {
+
+            Stop();
+            var comp = $("#session-end");
+            comp.text('Completed');
+            comp.prop('id', '');
+            comp.prop('class', 'btn-start');
+        });
+
+        $("#session-start").click(function () {
+            debugger;
+            Start();
+            var comp = $("#session-start");
+            comp.hide();
+            $("#session-end").show();
+            //comp.text('Stop');
+            //comp.prop('id', 'session-end');
+            //comp.prop('class', 'btn-end');
+        });
+
+        function Start() {
+
+            var getWebSocketMessages = function (onMessageReceived) {
+
+                var url = `wss://${location.host}/Test/Start`;
+
+                var webSocket = new WebSocket(url);
+
+                webSocket.onmessage = onMessageReceived;
+            };
+
+            var nextShuttle = document.getElementById('next_shuttle');
+            var totalTimeMinute = document.getElementById('total_time_minute');
+            var totalTimeSecond = document.getElementById('total_time_second');
+            var totalTimeMilliSecond = document.getElementById('total_time_millisecond');
+            var toatlDistance = document.getElementById('total_distance');
+
+            var level = document.getElementById('level');
+            var shuttle = document.getElementById('shuttle');
+
+
+            getWebSocketMessages(function (message) {
+
+                var data = JSON.parse(message.data);
+
+                console.log(`data.IsCompleted  = ${data.IsCompleted}`);
+                if (data.IsCompleted === true)
+                    return;
+
+                nextShuttle.innerHTML = `${data.NextShuttle.Minute} : ${data.NextShuttle.Second}`;
+                totalTimeMinute.innerHTML = `${data.TotalTime.Minute} :`;
+                totalTimeSecond.innerHTML = `${data.TotalTime.Second}`;
+                toatlDistance.innerHTML = `${data.TotalDistance}`;
+                level.innerHTML = `${data.Level}`;
+                shuttle.innerHTML = `${data.Shuttle}`;
+
+                for (var i = 0; i < data.Athletes.length; i++) {
+
+                    var athlete = data.Athletes[i];
+
+                    var button = $(`#control-${athlete.Id}`);
+                    var state = $(`#state-${athlete.Id}`);
+
+                    if (athlete.State === 1) {
+                        //RUNNING
+                        state.text('Running');
+                        button.text('Warn');
+                        button.prop("disabled", false);
+                        button.prop('class', 'btn btn-warning');
+                    }
+                    else if (athlete.State === 2) {
+                        //WARNED
+                        state.text('Warned');
+                        button.text('Warn');
+                        button.prop("disabled", false);
+                        button.prop('class', 'btn btn-danger');
+                    }
+
+                    else if (athlete.State === 3) {
+                        //CANCELLED
+                        state.text('Disqualified');
+                        button.hide();
+                        //button.prop("disabled", true);
+                        //button.prop('class', 'btn btn-info');
+                    }
+                    else if (athlete.State === 4) {
+                        //FINISHED
+                        state.text('Completed');
+                        button.hide();
+                        //button.prop("disabled", true);
+                        //button.prop('class', 'btn btn-info');
+                    }
+
+                }
+            });
+        };
+
+        function Stop() {
+            $.ajax({
+                url: "/Test/Stop",
+                type: "POST",
+                success: function (result) {
+                    console.log('Test completed successfully.');
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        function BuildAthleteRowHtml(athlete) {
+
+            var nameStrip = `<div id="name-${athlete.id}">${athlete.name}</div>`;
+            var stateStrip = `<div id="state-${athlete.id}">${athlete.stateString}</div>`;
+            var buttonStrip = GetButtonStrip(athlete);
+
+            var rawhtml = '<div class="col-sm-12 user" style="background-color:aliceblue;">' + nameStrip + buttonStrip + stateStrip + '</div>';
+
+            return rawhtml;
+        }
+
+        function GetButtonStrip(athlete) {
+
+            var buttonstrip = '';
+
+            switch (athlete.state) {
+                case 0:
+                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-info" onclick="WarnAthlete(${athlete.id})" disabled>Ready</button>`;
+                    break;
+
+                case 1:
+                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-warning" onclick="WarnAthlete(${athlete.id})">Warn</button>`;
+                    break;
+
+                case 2:
+                    buttonstrip = `<button type="button" id="control-${athlete.id}" class="btn btn-danger" onclick="WarnAthlete(${athlete.id})">Warn</button>`;
+                    break;
+
+                case 3:
+                    buttonstrip = `<button type="button" id="" class="btn btn-info" disabled>Cancelled</button>`;
+                    break;
+
+                default:
+                    buttonstrip = '';
+                    break;
+            }
+
+            return buttonstrip;
+        }
+
+
+        $.ajax({
+            url: "/Test/GetAthletes",
+            type: "GET",
+            success: function (result) {
+                var athleleBoard = document.getElementById('athele_board');
+                for (var i = 0; i < result.length; i++) {
+                    athleleBoard.innerHTML = athleleBoard.innerHTML += BuildAthleteRowHtml(result[i])
+                }
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    });
+</script>

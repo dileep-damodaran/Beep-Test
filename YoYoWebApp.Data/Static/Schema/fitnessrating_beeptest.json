@@ -1,0 +1,23 @@
+[
+
+  {
+    "AccumulatedShuttleDistance": "40",
+    "SpeedLevel": "5",
+    "ShuttleNo": "1",
+    "Speed": "10",
+    "LevelTime": "14.4",
+    "CommulativeTime": "00:24",
+    "StartTime": "00:00",
+    "ApproxVo2Max": "36.74"
+  },
+  {
+    "AccumulatedShuttleDistance": "80",
+    "SpeedLevel": "9",
+    "ShuttleNo": "1",
+    "Speed": "12",
+    "LevelTime": "12.5",
+    "CommulativeTime": "00:46",
+    "StartTime": "00:25",
+    "ApproxVo2Max": "37.07"
+  }
+]
