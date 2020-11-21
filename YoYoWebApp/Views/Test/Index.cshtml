@@ -56,6 +56,31 @@
                     </div>
                 </div>
             </div>
+
+
+
+            <div class="modal fade right" id="editResultPop" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-side modal-top-right" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title w-100" id="myModalLabel">Edit Result</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" name="modal-level" id="modal-level" value="" />
+                            <input type="text" name="modal-shuttle" id="modal-shuttle" value="" />
+                            <input type="hidden" name="modal-id" id="modal-id" value="" />
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="UpdateResult()">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -146,13 +171,43 @@
         });
     };
 
+    function LoadResult(id, level, shuttle) {
+
+        var modid = $("#modal-id");
+        var modlevel = $("#modal-level");
+        var modshuttle = $("#modal-shuttle");
+
+        modid.val(id);
+        modlevel.val(level);
+        modshuttle.val(shuttle);
+
+        $("#editResultPop").modal("show");
+    }
+
+    function UpdateResult() {
+
+        var id = $("#modal-id").val();
+        var level = $("#modal-level").val();
+        var shuttle = $("#modal-shuttle").val();
+
+        var resultTab = $(`#result-${id}`);
+        var result = `${level}-${shuttle}`;
+
+        resultTab.html(result);
+
+        var resultEdit = $(`#result-edit-${id}`);
+        resultEdit.attr('onclick', `LoadResult(${id},${level},${shuttle})`);
+
+        $("#editResultPop").modal("hide");
+    }
+
     function BuildAthleteRowHtml(athlete) {
 
         var nameStrip = `<div class="col-4 border-right"><div id="name-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;">${athlete.name}</div></div>`;
         var stateStrip = `<div class="col-2 border-right"><div id="state-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;"></div></div>`;
         var buttonStrip = GetButtonStrip(athlete);
 
-        var resultStrip = `<div class="col-2 border-right"><div id="result-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;"></div></div>`;
+        var resultStrip = `<div class="col-2 border-right"><div id="result-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;"></div><svg onclick="LoadResult(${athlete.id},${athlete.speedLevel},${athlete.shuttleNo})" title="Edit Result" id="result-edit-${athlete.id}" style="display:none;" width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-pen" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path  fill-rule="evenodd" d="M13.498.795l.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"/></svg></div>`;
 
         var rawhtml = '<div class="row text-center mt-4">' + nameStrip + buttonStrip + stateStrip + resultStrip + '</div>';
 
@@ -294,13 +349,17 @@
                         stopButton.fadeOut();
                     }
 
+                    var resultTab = $(`#result-${athlete.Id}`);
+                    var resultValue = resultTab.html();
 
-                    if (athlete.Result != null) {
+                    if (athlete.Result != null && resultValue == '') {
 
-                        console.log(athlete.Result);
-                        var resultTab = $(`#result-${athlete.Id}`);
-                        var result = `Level : ${athlete.Result.SpeedLevel} , Shuttle : ${athlete.Result.ShuttleNo}`;
-                        resultTab.text(result);
+                        var result = `${athlete.Result.SpeedLevel}-${athlete.Result.ShuttleNo}`;
+                        resultTab.html(result);
+
+                        var resultEdit = $(`#result-edit-${athlete.Id}`);
+                        resultEdit.attr('onclick', `LoadResult(${athlete.Id},${athlete.Result.SpeedLevel},${athlete.Result.ShuttleNo})`);
+                        resultEdit.show();
                     }
                 }
             });
