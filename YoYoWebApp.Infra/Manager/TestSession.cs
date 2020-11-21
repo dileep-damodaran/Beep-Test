@@ -88,8 +88,9 @@ namespace YoYoWebApp.Infra.Manager
             if (schema == null || !schema.Any())
                 throw new ArgumentNullException(nameof(schema));
 
+
             WebSocket = socket;
-            Schema = schema.ToList();
+            Schema = schema.OrderBy(_x => _x.StartTime.TotalSeconds).ToList();
 
             Previous = null;
             Current = Schema.FirstOrDefault();
@@ -162,6 +163,8 @@ namespace YoYoWebApp.Infra.Manager
             if (id == default)
                 throw new ArgumentNullException(nameof(id));
 
+            int remainingAthleteToComplete = 0;
+
             foreach (var athlete in Athletes)
             {
                 bool found = athlete.Id == id;
@@ -170,16 +173,20 @@ namespace YoYoWebApp.Infra.Manager
                 {
                     athlete.Stop();
                     athlete.Result = new TestResult(Previous?.SpeedLevel, Previous?.ShuttleNo);
-                    break;
                 }
+
+                if (!athlete.State.Equals(AppEnum.State.STOPPED))
+                    remainingAthleteToComplete++;
             }
+
+            if (remainingAthleteToComplete == 0)
+                Stop();
         }
 
 
         private async void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
-
-            var meta = new TestMetaData
+            var dashboardModel = new TestMetaData
             {
                 IsLastShuttle = Current == Last,
                 IsCompleted = Current == null && Next == null,
@@ -189,12 +196,15 @@ namespace YoYoWebApp.Infra.Manager
                 Level = Current.SpeedLevel,
                 Shuttle = Current.ShuttleNo,
                 Speed = Current.Speed,
-                //Progress = _progress,
                 Athletes = Athletes
             };
 
+            float shuttleDurationInSeconds = Next != null ? Next.StartTime.TotalSeconds - Current.StartTime.TotalSeconds : 1;
+            int secondsPassed = CurrentTime.TotalSeconds - Current.StartTime.TotalSeconds;
+            dashboardModel.Progress = (int)((secondsPassed / shuttleDurationInSeconds) * 100);
+
             byte[] bytes;
-            var obj = meta;
+            var obj = dashboardModel;
             var data = JsonConvert.SerializeObject(obj, Formatting.Indented);
 
             bytes = Encoding.ASCII.GetBytes(data);
@@ -215,7 +225,8 @@ namespace YoYoWebApp.Infra.Manager
                 Level = Current.SpeedLevel,
                 Shuttle = Current.ShuttleNo,
                 Speed = Current.Speed,
-                Athletes = Athletes
+                Athletes = Athletes,
+                Progress = 0
             };
 
             byte[] bytes;
@@ -254,7 +265,6 @@ namespace YoYoWebApp.Infra.Manager
 
                 tObj.MilliSecond = stopwatch.ElapsedMilliseconds - (((minute * 60) + seconds) * 1000);
                 this.CurrentTime = tObj;
-                //_progress = 100;
             }
         }
     }

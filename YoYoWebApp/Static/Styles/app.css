@@ -34,7 +34,7 @@
     vertical-align: top;
     /*margin-left: 15px;
     margin-right: 15px;*/
-    padding:15px;
+    padding: 15px;
 }
 
 .user {
@@ -50,3 +50,14 @@
     padding: 10px;
     font-size: 35px;
 }
+
+#session-start {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+    #session-start:hover {
+        box-shadow: 0 0 11px rgba(33,33,33,.2);
+    }
+

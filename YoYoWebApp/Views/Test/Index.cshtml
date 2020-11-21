@@ -1,77 +1,120 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>YoYoWebApp</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="~/Static/Styles/app.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    @*<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>*@
 </head>
 <body>
+    <div class="container">
 
-
-
-    @*<div class="row">
-        <div class="col-sm-12 text-center">*@
-            <!--<button id="" class="btn btn-primary btn-md center-block horizontal-block" Style="width: 100px;" OnClick="btnSearch_Click">Warn</button>
-            <button id="" class="btn btn-danger btn-md center-block horizontal-block" Style="width: 100px;" OnClick="btnClear_Click">Stop</button>-->
-        @*</div>
-    </div>*@
-
-
-
-
-
-    <div class="jumbotron text-center">
-        <div class="row text-center">
-            <div class="col-sm-12">
-                <h3>BEEP TEST</h3>
-            </div>
-        </div>
         <div class="row">
-            <div class="col-sm-12">
-                <button class="btn-start" id="session-start">Start</button>
-                <button class="btn-end" id="session-end" style="display:none">Stop</button>
-                <div class="" id="level_board">
-                    <p id="level" class="time">Level :</p>
-                    <p id="shuttle" class="time">Shuttle</p>
+            <div class="col-xl-12 col-lg-6 mb-4">
+                <div class="bg-white rounded-lg p-5 shadow">
+                    <h2 class="h6 font-weight-bold text-center mb-4">YOYO WEB APP</h2>
+
+                    <div id="session-start" class="progress mx-auto" data-value='0'>
+                        <span class="progress-left">
+                            <span class="progress-bar border-primary"></span>
+                        </span>
+                        <span class="progress-right">
+                            <span class="progress-bar border-primary"></span>
+                        </span>
+                        <div id="btn-progress" class="progress-value w-100 h-100 rounded-circle d-flex align-items-center justify-content-center">
+                            <div id="progress-value" class="h2 font-weight-bold">Start</div>
+                        </div>
+                    </div>
+
+                    <div class="row text-center mt-4">
+                        <div class="col-4 border-right">
+                            <div id="level" class="h4 font-weight-bold mb-0">--</div><span class="small text-gray">Level</span>
+                        </div>
+                        <div class="col-4 border-right">
+                            <div id="shuttle" class="h4 font-weight-bold mb-0">--</div><span class="small text-gray">Shuttle</span>
+                        </div>
+                        <div class="col-4 border-right">
+                            <div id="speed" class="h4 font-weight-bold mb-0">--</div><span class="small text-gray">Speed</span>
+                        </div>
+                    </div>
+
+                    <div class="row text-center mt-4">
+                        <div class="col-4 border-right">
+                            <div id="next_shuttle" class="h4 font-weight-bold mb-0">--</div><span class="small text-gray">Next Shuttle</span>
+                        </div>
+                        <div class="col-4 border-right">
+                            <div id="total_time" class="h4 font-weight-bold mb-0">00:00</div><span class="small text-gray">Total Time</span>
+                        </div>
+                        <div class="col-4">
+                            <div id="total_distance" class="h4 font-weight-bold mb-0">--</div><span class="small text-gray">Total Distance</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="container text-center">
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="col-sm-4" style="border-bottom-color:black">
-                        <h4>NEXT SHUTTLE</h4>
-                        <p id="next_shuttle" class="time">0:0</p>
-                    </div>
-                    <div class="col-sm-4" style="border-bottom-color:black;">
-                        <h4>TOTAL TIME</h4>
-                        <span id="total_time_minute" class="time">00</span>
-                        <span id="total_time_second" class="time">00</span>
-                        @*<span id="total_time_millisecond" class="time">000</span>*@
+            <div class="col-xl-12 col-lg-6 mb-4">
+                <div class="row">
+                    <div class="col-xl-12 col-lg-6 mb-4">
+                        <div class="bg-white rounded-lg p-5 shadow" id="athele_board">
 
-                    </div>
-                    <div class="col-sm-4" style="border-bottom-color:black">
-                        <h4>TOTAL DISTANCE</h4>
-                        <p id="total_distance" class="time">0</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="container" id="athele_board">
-
-    </div>
-
 </body>
 </html>
 
 
 <script type="text/javascript">
+
+    $('#shuttle').bind('contentchanged', function () {
+        var shuttle = $("#shuttle");
+        shuttle.css('color', 'red');
+        shuttle.animate({ "font-size": "4em" }, 100);
+        shuttle.animate({ "font-size": "2em" }, 100);
+    });
+
+    $('#level').bind('contentchanged', function () {
+        var level = $("#level");
+        level.css('color', 'red');
+        level.animate({ "font-size": "4em" }, 100);
+        level.animate({ "font-size": "2em" }, 100);
+    });
+
+    function LoadProgressBar(value) {
+        $(".progress").each(function () {
+
+            var left = $(this).find('.progress-left .progress-bar');
+            var right = $(this).find('.progress-right .progress-bar');
+
+            if (value >= 0) {
+                if (value <= 50) {
+                    right.css('transform', 'rotate(' + percentageToDegrees(value) + 'deg)');
+                    left.css('transform', 'rotate(0deg)');
+                } else {
+                    right.css('transform', 'rotate(180deg)');
+                    left.css('transform', 'rotate(' + percentageToDegrees(value - 50) + 'deg)');
+                }
+            }
+        });
+    }
+
+    function percentageToDegrees(percentage) {
+        return percentage / 100 * 360
+    }
+
+    function LoadAthletes() {
+        $.ajax({
+            url: "/Test/GetAthletes",
+            type: "GET",
+            success: function (result) {
+                var athleleBoard = document.getElementById('athele_board');
+                for (var i = 0; i < result.length; i++) {
+                    athleleBoard.innerHTML = athleleBoard.innerHTML += BuildAthleteRowHtml(result[i])
+                }
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    }
 
     function WarnAthlete(athleteId) {
         $.ajax({
@@ -103,7 +146,41 @@
         });
     };
 
+    function BuildAthleteRowHtml(athlete) {
+
+        var nameStrip = `<div class="col-4 border-right"><div id="name-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;">${athlete.name}</div></div>`;
+        var stateStrip = `<div class="col-2 border-right"><div id="state-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;"></div></div>`;
+        var buttonStrip = GetButtonStrip(athlete);
+
+        var resultStrip = `<div class="col-2 border-right"><div id="result-${athlete.id}" class="btn btn-md center-block" Style="width: 100px;"></div></div>`;
+
+        var rawhtml = '<div class="row text-center mt-4">' + nameStrip + buttonStrip + stateStrip + resultStrip + '</div>';
+
+        return rawhtml;
+    }
+
+
+    function GetButtonStrip(athlete) {
+
+        var buttonstrip = '';
+
+        switch (athlete.state) {
+            case 0:
+                buttonstrip = `<div class="col-2 border-right"><button type="button" id="warn-${athlete.id}" class="btn btn-warning btn-md center-block" Style="width: 100px;" onclick="WarnAthlete(${athlete.id})"></button></div><div class="col-2 border-right"><button type="button" id="stop-${athlete.id}" class="btn btn-danger btn-md center-block" Style="width: 100px;" onclick="StopAthlete(${athlete.id})"></button></div>`;
+                break;
+
+            default:
+                buttonstrip = '';
+                break;
+        }
+
+        return buttonstrip;
+    }
+
     $(document).ready(function () {
+
+        var running = false;
+        LoadAthletes();
 
         $(document).on('click', '#session-end', function (event) {
 
@@ -115,11 +192,11 @@
         });
 
         $("#session-start").click(function () {
-            debugger;
-            Start();
-            var comp = $("#session-start");
-            comp.hide();
-            $("#session-end").show();
+            if (running === false) {
+                Start();
+                running = true;
+                $("#session-end").show();
+            }
         });
 
         function Start() {
@@ -133,30 +210,42 @@
                 webSocket.onmessage = onMessageReceived;
             };
 
-            var nextShuttle = document.getElementById('next_shuttle');
-            var totalTimeMinute = document.getElementById('total_time_minute');
-            var totalTimeSecond = document.getElementById('total_time_second');
-            var totalTimeMilliSecond = document.getElementById('total_time_millisecond');
-            var toatlDistance = document.getElementById('total_distance');
+            var nextShuttle = $('#next_shuttle');
+            var totalTime = $('#total_time');
+            var toatlDistance = $('#total_distance');
 
-            var level = document.getElementById('level');
-            var shuttle = document.getElementById('shuttle');
+            var level = $('#level');
+            var shuttle = $('#shuttle');
+            var speed = $('#speed');
+            var progress = $('#progress-value');
 
 
             getWebSocketMessages(function (message) {
 
                 var data = JSON.parse(message.data);
 
-                console.log(`data.IsCompleted  = ${data.IsCompleted}`);
                 if (data.IsCompleted === true)
                     return;
+                var oldLevel = +level.text();
+                var oldShuttle = +shuttle.text();
 
-                nextShuttle.innerHTML = `${data.NextShuttle.Minute} : ${data.NextShuttle.Second}`;
-                totalTimeMinute.innerHTML = `${data.TotalTime.Minute} :`;
-                totalTimeSecond.innerHTML = `${data.TotalTime.Second}`;
-                toatlDistance.innerHTML = `${data.TotalDistance}`;
-                level.innerHTML = `${data.Level}`;
-                shuttle.innerHTML = `${data.Shuttle}`;
+                if (oldLevel != data.Level)
+                    level.trigger('contentchanged');
+
+                if (oldShuttle != data.Shuttle)
+                    shuttle.trigger('contentchanged');
+
+                nextShuttle.html(`${data.NextShuttle.Minute} : ${data.NextShuttle.Second}`);
+                totalTime.html(`${data.TotalTime.Minute}:${data.TotalTime.Second}`);
+                toatlDistance.html(`${data.TotalDistance}<sup class="small">m</sup>`);
+                level.html(`${data.Level}`);
+                level.css('color', 'black');
+                shuttle.html(`${data.Shuttle}`);
+                shuttle.css('color', 'black');
+                speed.html(`${data.Speed}<sup class="small">Km/h</sup>`);
+                progress.html(`${data.Progress}<sup class="small">%</sup>`);
+
+                LoadProgressBar(data.Progress);
 
                 for (var i = 0; i < data.Athletes.length; i++) {
 
@@ -229,50 +318,5 @@
                 }
             });
         }
-
-        function BuildAthleteRowHtml(athlete) {
-
-            var nameStrip = `<div id="name-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;">${athlete.name}</div>`;
-            var buttonStrip = GetButtonStrip(athlete);
-            var stateStrip = `<div id="state-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;"></div>`;
-
-            var resultStrip = `<div id="result-${athlete.id}" class="btn btn-md center-block horizontal-block" Style="width: 100px;"></div>`;
-
-            var rawhtml = '<div class="col-sm-12 user" style="background-color:aliceblue;">' + nameStrip + buttonStrip + stateStrip + resultStrip +'</div>';
-
-            return rawhtml;
-        }
-
-        function GetButtonStrip(athlete) {
-
-            var buttonstrip = '';
-
-            switch (athlete.state) {
-                case 0:
-                    buttonstrip = `<button type="button" id="warn-${athlete.id}" class="btn btn-warning btn-md center-block horizontal-block" Style="width: 100px;" onclick="WarnAthlete(${athlete.id})"></button><button type="button" id="stop-${athlete.id}" class="btn btn-danger btn-md center-block horizontal-block" Style="width: 100px;" onclick="StopAthlete(${athlete.id})"></button>`;
-                    break;
-
-                default:
-                    buttonstrip = '';
-                    break;
-            }
-
-            return buttonstrip;
-        }
-
-
-        $.ajax({
-            url: "/Test/GetAthletes",
-            type: "GET",
-            success: function (result) {
-                var athleleBoard = document.getElementById('athele_board');
-                for (var i = 0; i < result.length; i++) {
-                    athleleBoard.innerHTML = athleleBoard.innerHTML += BuildAthleteRowHtml(result[i])
-                }
-            },
-            error: function (error) {
-                console.log(error);
-            }
-        });
     });
 </script>

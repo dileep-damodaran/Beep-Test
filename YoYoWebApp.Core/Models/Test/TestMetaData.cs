@@ -12,23 +12,23 @@ namespace YoYoWebApp.Core.Models.Test
 
         }
 
-        public TimeInstance NextShuttle { get; set; } //_next.StartTime
+        public TimeInstance NextShuttle { get; set; }
 
-        public TimeInstance TotalTime { get; set; } //timer
+        public TimeInstance TotalTime { get; set; }
 
-        public float TotalDistance { get; set; } // _current.AccumulatedShuttleDistance
+        public float TotalDistance { get; set; }
 
-        public int Level { get; set; } //_current.SppedLevel
+        public int Level { get; set; }
 
-        public int Shuttle { get; set; } //_current.ShuttleNo
+        public int Shuttle { get; set; }
 
-        public float Speed { get; set; } //_current.Speed
+        public float Speed { get; set; }
 
-        public float Progress { get; set; } //timer
+        public int Progress { get; set; }
 
-        public bool IsLastShuttle { get; set; } //timer
+        public bool IsLastShuttle { get; set; }
 
-        public bool IsCompleted { get; set; } 
+        public bool IsCompleted { get; set; }
 
         public List<Athlete> Athletes { get; set; }
     }
