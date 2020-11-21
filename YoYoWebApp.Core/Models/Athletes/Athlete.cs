@@ -9,15 +9,13 @@ namespace YoYoWebApp.Core.Models.Athletes
 {
     public class Athlete : IAthlete
     {
+        private StateMachine<AppEnum.State, AppEnum.Trigger> _stateMachine;
 
         public Athlete()
         {
-            ConfigureStateMachine();
+            ConfigureStateTransition();
             State = AppEnum.State.IDLE;
         }
-
-
-        public StateMachine<AppEnum.State, AppEnum.Trigger> StateMachine { get; set; }
 
         public int Id { get; set; }
 
@@ -59,45 +57,43 @@ namespace YoYoWebApp.Core.Models.Athletes
             }
         }
 
-
         public void Start()
         {
-            StateMachine.Fire(AppEnum.Trigger.START);
+            _stateMachine.Fire(AppEnum.Trigger.START);
         }
 
         public void Warn()
         {
 
-            StateMachine.Fire(AppEnum.Trigger.WARN);
+            _stateMachine.Fire(AppEnum.Trigger.WARN);
         }
 
         public void Stop()
         {
-            StateMachine.Fire(AppEnum.Trigger.STOP);
+            _stateMachine.Fire(AppEnum.Trigger.STOP);
         }
 
 
         public void Finish()
         {
-            StateMachine.Fire(AppEnum.Trigger.FINISH);
+            _stateMachine.Fire(AppEnum.Trigger.FINISH);
         }
 
-        public void ConfigureStateMachine()
+        public void ConfigureStateTransition()
         {
-            this.StateMachine = new StateMachine<AppEnum.State, AppEnum.Trigger>(() => State, s => State = s);
+            _stateMachine = new StateMachine<AppEnum.State, AppEnum.Trigger>(() => State, s => State = s);
 
-            this.StateMachine.Configure(AppEnum.State.IDLE)
+            _stateMachine.Configure(AppEnum.State.IDLE)
                 .Permit(AppEnum.Trigger.START, AppEnum.State.RUNNING);
 
-            this.StateMachine.Configure(AppEnum.State.RUNNING)
+            _stateMachine.Configure(AppEnum.State.RUNNING)
                 .Permit(AppEnum.Trigger.WARN, AppEnum.State.WARNED)
                 .Permit(AppEnum.Trigger.STOP, AppEnum.State.STOPPED)
                 .Permit(AppEnum.Trigger.FINISH, AppEnum.State.FINISHED);
 
-            this.StateMachine.Configure(AppEnum.State.WARNED)
+            _stateMachine.Configure(AppEnum.State.WARNED)
                 .Permit(AppEnum.Trigger.STOP, AppEnum.State.STOPPED)
                 .Permit(AppEnum.Trigger.FINISH, AppEnum.State.FINISHED);
-
         }
     }
 }

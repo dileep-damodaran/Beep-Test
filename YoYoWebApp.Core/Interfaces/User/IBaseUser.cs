@@ -1,6 +1,4 @@
-﻿using static YoYoWebApp.Core.Enums.AppEnum;
-
-namespace YoYoWebApp.Core.Interfaces.User
+﻿namespace YoYoWebApp.Core.Interfaces.User
 {
     public interface IBaseUser
     {

@@ -12,7 +12,7 @@
   {
     "AccumulatedShuttleDistance": "80",
     "SpeedLevel": "9",
-    "ShuttleNo": "2",
+    "ShuttleNo": "1",
     "Speed": "12",
     "LevelTime": "12.5",
     "CommulativeTime": "00:46",
@@ -910,4 +910,3 @@
     "ApproxVo2Max": "66.98"
   }
 ]
-

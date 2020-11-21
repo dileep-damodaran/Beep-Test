@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using YoYoWebApp.Core.Enums;
+using YoYoWebApp.Core.Interfaces.Test;
 using YoYoWebApp.Core.Models.Athletes;
 using YoYoWebApp.Core.Models.Schema;
 using YoYoWebApp.Core.Models.Test;
@@ -15,15 +16,33 @@ using YoYoWebApp.Core.Models.Util;
 
 namespace YoYoWebApp.Infra.Manager
 {
-    public sealed class TestSession
+    public class TestSession : ITestSession
     {
 
         private static TestSession _instance;
 
+        private List<Athlete> _athletes;
+
+        private TimeInstance _currentTime;
+
+        private List<SchemaInstance> _schema;
+
+        private SchemaInstance _previous;
+
+        private SchemaInstance _current;
+
+        private SchemaInstance _last;
+
+        private WebSocket _socket;
+
+        private System.Timers.Timer _timer;
+
+        private CancellationTokenSource _cancellationTokenSource;
+
         private TestSession()
         {
-            CancellationTokenSource = new CancellationTokenSource();
-            Athletes = new List<Athlete>();
+            _cancellationTokenSource = new CancellationTokenSource();
+            _athletes = new List<Athlete>();
         }
 
         public static TestSession Instance
@@ -38,40 +57,29 @@ namespace YoYoWebApp.Infra.Manager
             }
         }
 
-        private WebSocket WebSocket { get; set; }
+        public List<Athlete> Athletes => _athletes;
 
-        private CancellationTokenSource CancellationTokenSource { get; set; }
+        public TimeInstance CurrentTime => _currentTime;
 
-
-        private System.Timers.Timer Timer;
-
-        public List<Athlete> Athletes { get; set; }
-
-        private TimeInstance CurrentTime { get; set; }
-
-        private List<SchemaInstance> Schema { get; set; }
-
-        public SchemaInstance Previous { get; private set; }
-
-        public SchemaInstance Current { get; private set; }
-
-        public int CurrentIndex
+        private int CurrentIndex
         {
             get
             {
-                return Current != null ? Schema.IndexOf(Current) : -1;
+                return _current != null ? _schema.IndexOf(_current) : -1;
             }
         }
 
-        public SchemaInstance Next
+        private SchemaInstance Next
         {
             get
             {
-                int nextIndex = CurrentIndex == -1 ? -1 : CurrentIndex < (Schema.Count() - 1) ? CurrentIndex + 1 : -1;
+                int nextIndex = CurrentIndex == -1 ? -1 : CurrentIndex < (_schema.Count() - 1) ? CurrentIndex + 1 : -1;
 
-                return nextIndex != -1 ? Schema[nextIndex] : null;
+                return nextIndex != -1 ? _schema[nextIndex] : null;
             }
         }
+
+        private SchemaInstance Last => _last;
 
         private int? NextIntervalInSecond
         {
@@ -81,34 +89,34 @@ namespace YoYoWebApp.Infra.Manager
             }
         }
 
-        public SchemaInstance Last { get; private set; }
-
         public void Initialize(WebSocket socket, IEnumerable<SchemaInstance> schema)
         {
+            if (socket == null)
+                throw new ArgumentNullException(nameof(socket));
+
             if (schema == null || !schema.Any())
                 throw new ArgumentNullException(nameof(schema));
 
+            _socket = socket;
+            _schema = schema.OrderBy(_x => _x.StartTime.TotalSeconds).ToList();
 
-            WebSocket = socket;
-            Schema = schema.OrderBy(_x => _x.StartTime.TotalSeconds).ToList();
-
-            Previous = null;
-            Current = Schema.FirstOrDefault();
-            Last = Schema.LastOrDefault();
+            _previous = null;
+            _current = _schema.FirstOrDefault();
+            _last = _schema.LastOrDefault();
 
             Start();
         }
 
         private async Task Start()
         {
-            CancellationToken cancellationToken = CancellationTokenSource.Token;
+            CancellationToken cancellationToken = _cancellationTokenSource.Token;
             ToggleTimer();
-            await Task.Factory.StartNew(() => Process(), cancellationToken);
+            await Task.Factory.StartNew(() => MonitorSchema(), cancellationToken);
         }
 
         public void Stop()
         {
-            var allowedAthletes = Athletes.Where(_x => _x.State == AppEnum.State.RUNNING || _x.State == AppEnum.State.WARNED).ToList();
+            var allowedAthletes = _athletes.Where(_x => _x.State == AppEnum.State.RUNNING || _x.State == AppEnum.State.WARNED).ToList();
 
             allowedAthletes.ForEach(_x =>
             {
@@ -116,29 +124,30 @@ namespace YoYoWebApp.Infra.Manager
             });
 
             OnStopEvent();
-            CancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
             ToggleTimer(false);
         }
 
         private void ToggleTimer(bool start = true)
         {
-            if (start)
-            {
-                this.Timer = new System.Timers.Timer(1);
-                this.Timer.Elapsed += OnTimedEvent;
-                this.Timer.AutoReset = true;
-                this.Timer.Enabled = true;
+            if (!start)
+                _timer.Stop();
 
-                this.Timer.Start();
-            }
             else
-                this.Timer.Stop();
+            {
+                _timer = new System.Timers.Timer(1);
+                _timer.Elapsed += OnTimedEvent;
+                _timer.AutoReset = true;
+                _timer.Enabled = true;
+
+                _timer.Start();
+            }
         }
 
         public void AddAthletes(List<Athlete> athletes)
         {
             if (athletes.Any())
-                athletes.ForEach(_x => { _x.Start(); Athletes.Add(_x); });
+                athletes.ForEach(_x => { _x.Start(); _athletes.Add(_x); });
         }
 
         public void WarnAthelete(int id)
@@ -146,7 +155,7 @@ namespace YoYoWebApp.Infra.Manager
             if (id == default)
                 throw new ArgumentNullException(nameof(id));
 
-            foreach (var athlete in Athletes)
+            foreach (var athlete in _athletes)
             {
                 bool found = athlete.Id == id;
 
@@ -165,14 +174,14 @@ namespace YoYoWebApp.Infra.Manager
 
             int remainingAthleteToComplete = 0;
 
-            foreach (var athlete in Athletes)
+            foreach (var athlete in _athletes)
             {
                 bool found = athlete.Id == id;
 
                 if (found && athlete.CanStop)
                 {
                     athlete.Stop();
-                    athlete.Result = new TestResult(Previous?.SpeedLevel, Previous?.ShuttleNo);
+                    athlete.Result = new TestResult(_previous?.SpeedLevel, _previous?.ShuttleNo);
                 }
 
                 if (!athlete.State.Equals(AppEnum.State.STOPPED))
@@ -183,24 +192,23 @@ namespace YoYoWebApp.Infra.Manager
                 Stop();
         }
 
-
         private async void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
         {
             var dashboardModel = new TestMetaData
             {
-                IsLastShuttle = Current == Last,
-                IsCompleted = Current == null && Next == null,
-                NextShuttle = Next != null ? Next.StartTime : Current.StartTime,
+                IsLastShuttle = _current == Last,
+                IsCompleted = _current == null && Next == null,
+                NextShuttle = Next != null ? Next.StartTime : _current.StartTime,
                 TotalTime = CurrentTime,
-                TotalDistance = Current.AccumulatedShuttleDistance,
-                Level = Current.SpeedLevel,
-                Shuttle = Current.ShuttleNo,
-                Speed = Current.Speed,
-                Athletes = Athletes
+                TotalDistance = _current.AccumulatedShuttleDistance,
+                Level = _current.SpeedLevel,
+                Shuttle = _current.ShuttleNo,
+                Speed = _current.Speed,
+                Athletes = _athletes
             };
 
-            float shuttleDurationInSeconds = Next != null ? Next.StartTime.TotalSeconds - Current.StartTime.TotalSeconds : 1;
-            int secondsPassed = CurrentTime.TotalSeconds - Current.StartTime.TotalSeconds;
+            float shuttleDurationInSeconds = Next != null ? Next.StartTime.TotalSeconds - _current.StartTime.TotalSeconds : 1;
+            int secondsPassed = CurrentTime.TotalSeconds - _current.StartTime.TotalSeconds;
             dashboardModel.Progress = (int)((secondsPassed / shuttleDurationInSeconds) * 100);
 
             byte[] bytes;
@@ -210,23 +218,23 @@ namespace YoYoWebApp.Infra.Manager
             bytes = Encoding.ASCII.GetBytes(data);
             var arraySegment = new ArraySegment<byte>(bytes);
 
-            await this.WebSocket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
+            await _socket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
         private async void OnStopEvent()
         {
             var meta = new TestMetaData
             {
-                IsLastShuttle = Current == Last,
-                IsCompleted = Current == null && Next == null,
-                NextShuttle = Next != null ? Next.StartTime : Current.StartTime,
+                IsLastShuttle = _current == Last,
+                IsCompleted = _current == null && Next == null,
+                NextShuttle = Next != null ? Next.StartTime : _current.StartTime,
                 TotalTime = CurrentTime,
-                TotalDistance = Current.AccumulatedShuttleDistance,
-                Level = Current.SpeedLevel,
-                Shuttle = Current.ShuttleNo,
-                Speed = Current.Speed,
-                Athletes = Athletes,
-                Progress = 0
+                TotalDistance = _current.AccumulatedShuttleDistance,
+                Level = _current.SpeedLevel,
+                Shuttle = _current.ShuttleNo,
+                Speed = _current.Speed,
+                Athletes = _athletes,
+                Progress = default
             };
 
             byte[] bytes;
@@ -236,10 +244,10 @@ namespace YoYoWebApp.Infra.Manager
             bytes = Encoding.ASCII.GetBytes(data);
             var arraySegment = new ArraySegment<byte>(bytes);
 
-            await this.WebSocket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
+            await _socket.SendAsync(arraySegment, WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
-        private void Process()
+        private void MonitorSchema()
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -250,8 +258,8 @@ namespace YoYoWebApp.Infra.Manager
 
                 if (elapsedSeconds >= (NextIntervalInSecond / 1000))
                 {
-                    Previous = Current;
-                    Current = Next;
+                    _previous = _current;
+                    _current = Next;
 
                     stopwatch.Stop();
                     stopwatch.Start();
@@ -264,7 +272,7 @@ namespace YoYoWebApp.Infra.Manager
 
 
                 tObj.MilliSecond = stopwatch.ElapsedMilliseconds - (((minute * 60) + seconds) * 1000);
-                this.CurrentTime = tObj;
+                _currentTime = tObj;
             }
         }
     }
