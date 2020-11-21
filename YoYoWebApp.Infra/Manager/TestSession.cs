@@ -61,6 +61,10 @@ namespace YoYoWebApp.Infra.Manager
 
         public TimeInstance CurrentTime => _currentTime;
 
+        private SchemaInstance Last => _last;
+
+        public bool IsCompleted => !_timer.Enabled;
+
         private int CurrentIndex
         {
             get
@@ -78,9 +82,6 @@ namespace YoYoWebApp.Infra.Manager
                 return nextIndex != -1 ? _schema[nextIndex] : null;
             }
         }
-
-        private SchemaInstance Last => _last;
-
         private int? NextIntervalInSecond
         {
             get

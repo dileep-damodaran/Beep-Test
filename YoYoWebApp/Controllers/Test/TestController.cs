@@ -40,13 +40,19 @@ namespace YoYoWebApp.Controllers.Test
             if (!isSocketRequest)
                 context.Response.StatusCode = 400;
 
-            var schema = _mapper.Map<IEnumerable<SchemaInstance>>((IEnumerable<SchemaInstanceReaderModel>)_schema.GetSchema().Result);
             var socket = await context.WebSockets.AcceptWebSocketAsync();
+
+            var getSchemaTask = _schema.GetSchema();
+
+            if (!getSchemaTask.IsSucceeded)
+                throw new System.Exception("No Schema found.");
 
             var getAthletesTask = _schema.GetAthletes();
 
             if (!getAthletesTask.IsSucceeded)
                 throw new System.Exception("No athletes found.");
+
+            var schema = _mapper.Map<IEnumerable<SchemaInstance>>((IEnumerable<SchemaInstanceReaderModel>)getSchemaTask.Result);
 
             var athletes = (List<Athlete>)getAthletesTask.Result;
 
@@ -56,7 +62,7 @@ namespace YoYoWebApp.Controllers.Test
 
             session.Initialize(socket, schema);
 
-            while (true)
+            while (!session.IsCompleted)
             {
 
             }

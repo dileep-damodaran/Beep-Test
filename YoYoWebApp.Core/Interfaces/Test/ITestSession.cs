@@ -8,5 +8,7 @@ namespace YoYoWebApp.Core.Interfaces.Test
         static ITestSession Instance { get; }
 
         List<Athlete> Athletes { get; }
+
+        bool IsCompleted { get; }
     }
 }
